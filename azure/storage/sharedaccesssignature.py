@@ -17,6 +17,11 @@ from azure.storage import X_MS_VERSION
 
 #-------------------------------------------------------------------------
 # Constants for the share access signature
+CACHE_CONTROL = 'rscc'
+CONTENT_DISPOSITION = 'rscd'
+CONTENT_ENCODING = 'rsce'
+CONTENT_LANGUAGE = 'rscl'
+CONTENT_TYPE = 'rsct'
 SIGNED_VERSION = 'sv'
 SIGNED_START = 'st'
 SIGNED_EXPIRY = 'se'
@@ -74,6 +79,24 @@ class SharedAccessPolicy(object):
         self.id = signed_identifier
         self.access_policy = access_policy
 
+class ResponseHeaders(object):
+    '''
+    ResponseHeaders class.
+    
+    Version 2013-08-15 and Later
+    
+    following new query parameters enable the client  to override response headers a specific shared access signature:
+    
+    Cache-Control(rscc), Content-Disposition(rscd), Content-Encoding(rsce), Content-Language(rscl), Content-Type(rsct)
+    '''
+    
+    def __init__(self, cache_control='', content_disposition='', content_encoding='', content_language='', content_type=''):
+        self.cache_control = cache_control
+        self.content_disposition = content_disposition
+        self.content_encoding = content_encoding 
+        self.content_language = content_language 
+        self.content_type = content_type
+
 
 class SharedAccessSignature(object):
 
@@ -93,6 +116,7 @@ class SharedAccessSignature(object):
 
     def generate_signed_query_string(self, path, resource_type,
                                      shared_access_policy,
+                                     response_headers,
                                      version=X_MS_VERSION):
         '''
         Generates the query string for path, resource type and shared access
@@ -116,14 +140,24 @@ class SharedAccessSignature(object):
             query_string[SIGNED_VERSION] = version
         query_string[SIGNED_EXPIRY] = shared_access_policy.access_policy.expiry
         query_string[SIGNED_RESOURCE] = resource_type
-        query_string[
-            SIGNED_PERMISSION] = shared_access_policy.access_policy.permission
+        query_string[SIGNED_PERMISSION] = shared_access_policy.access_policy.permission
 
         if shared_access_policy.id:
             query_string[SIGNED_IDENTIFIER] = shared_access_policy.id
-
+        
+        if response_headers.cache_control:
+            query_string[CACHE_CONTROL] = response_headers.cache_control
+        if response_headers.content_disposition:
+            query_string[CONTENT_DISPOSITION] = response_headers.content_disposition
+        if response_headers.content_encoding:
+            query_string[CONTENT_ENCODING] = response_headers.content_encoding
+        if response_headers.content_language:
+            query_string[CONTENT_LANGUAGE] = response_headers.content_language
+        if response_headers.content_type:
+            query_string[CONTENT_TYPE] = response_headers.content_type
+        
         query_string[SIGNED_SIGNATURE] = self._generate_signature(
-            path, shared_access_policy, version)
+            path, shared_access_policy, version, response_headers)
         return query_string
 
     def sign_request(self, web_resource):
@@ -168,11 +202,31 @@ class SharedAccessSignature(object):
         if SIGNED_VERSION in query_string:
             convert_str += SIGNED_VERSION + '=' + \
                 query_string[SIGNED_VERSION] + '&'
+                
+                
+        # Response Headers
+        if CACHE_CONTROL in query_string:
+            convert_str += CACHE_CONTROL + '=' + \
+            url_quote(query_string[CACHE_CONTROL]) + '&' 
+        if CONTENT_DISPOSITION in query_string:
+            convert_str += CONTENT_DISPOSITION + '=' + \
+            url_quote(query_string[CONTENT_DISPOSITION]) + '&' 
+        if CONTENT_ENCODING in query_string:
+            convert_str += CONTENT_ENCODING + '=' + \
+            url_quote(query_string[CONTENT_ENCODING]) + '&' 
+        if CONTENT_LANGUAGE in query_string:
+            convert_str += CONTENT_LANGUAGE + '=' + \
+            url_quote(query_string[CONTENT_LANGUAGE]) + '&' 
+        if CONTENT_TYPE in query_string:
+            convert_str += CONTENT_TYPE + '=' + \
+            url_quote(query_string[CONTENT_TYPE]) + '&' 
+
+    
         convert_str += SIGNED_SIGNATURE + '=' + \
             url_quote(query_string[SIGNED_SIGNATURE]) + '&'
         return convert_str
 
-    def _generate_signature(self, path, shared_access_policy, version):
+    def _generate_signature(self, path, shared_access_policy, version, response_headers):
         ''' Generates signature for a given path and shared access policy. '''
 
         def get_value_to_append(value, no_new_line=False):
@@ -195,13 +249,16 @@ class SharedAccessSignature(object):
              get_value_to_append(shared_access_policy.access_policy.start) +
              get_value_to_append(shared_access_policy.access_policy.expiry) +
              get_value_to_append(canonicalized_resource))
-
+        string_to_sign += get_value_to_append(shared_access_policy.id)
         if version:
-            string_to_sign += get_value_to_append(shared_access_policy.id)
-            string_to_sign += get_value_to_append(version, True)
-        else:
-            string_to_sign += get_value_to_append(shared_access_policy.id, True)
-
+            
+            string_to_sign += get_value_to_append(version)
+        
+        string_to_sign += get_value_to_append(response_headers.cache_control)
+        string_to_sign += get_value_to_append(response_headers.content_disposition)
+        string_to_sign += get_value_to_append(response_headers.content_encoding)
+        string_to_sign += get_value_to_append(response_headers.content_language)
+        string_to_sign += get_value_to_append(response_headers.content_type, True)
         return self._sign(string_to_sign)
 
     def _permission_matches_request(self, shared_access_signature,

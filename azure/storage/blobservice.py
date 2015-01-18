@@ -45,6 +45,7 @@ from azure.storage import (
     PageRange,
     SignedIdentifiers,
     StorageServiceProperties,
+    StorageServiceStats,
     _convert_block_list_to_xml,
     _convert_response_to_block_list,
     _create_blob_result,
@@ -512,7 +513,8 @@ class BlobService(_StorageClient):
             request, self.use_local_storage)
         request.headers = _update_storage_blob_header(
             request, self.account_name, self.account_key)
-        self._perform_request(request)
+        return self._perform_request(request)
+        
 
     def get_blob_service_properties(self, timeout=None):
         '''
@@ -2176,3 +2178,21 @@ class BlobService(_StorageClient):
         response = self._perform_request(request)
 
         return _parse_simple_list(response, PageList, PageRange, "page_ranges")
+        
+        
+    def get_blob_service_stats(self, timeout=None):
+        '''
+        
+        '''
+        
+        request = HTTPRequest()
+        request.method = u'GET'
+        request.host = self._get_host(secondary=True)
+        request.path = u'/?restype=service&comp=stats'
+        request.query = [('timeout', _int_or_none(timeout))]
+        request.path, request.query = _update_request_uri_query_local_storage(
+             request, self.use_local_storage)
+        request.headers = _update_storage_blob_header(
+             request, self.account_name, self.account_key)
+        response = self._perform_request(request)
+        return _parse_response(response, StorageServiceStats)

@@ -122,12 +122,14 @@ class _StorageClient(object):
         '''
         self._httpclient.set_proxy(host, port, user, password)
 
-    def _get_host(self):
+    def _get_host(self, secondary=False):
         if self.use_local_storage:
             return self.dev_host
-        else:
+        elif secondary:
+            return self.account_name + '-secondary' + self.host_base
+        else :
             return self.account_name + self.host_base
-
+    
     def _perform_request_worker(self, request):
         return self._httpclient.perform_request(request)
 

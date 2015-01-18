@@ -42,7 +42,7 @@ from azure import (WindowsAzureData,
                    )
 
 # x-ms-version for storage service.
-X_MS_VERSION = '2012-02-12'
+X_MS_VERSION = '2014-02-14'
 
 
 class EnumResultsBase(object):
@@ -136,14 +136,68 @@ class Metrics(WindowsAzureData):
         self.retention_policy = RetentionPolicy()
 
 
+class HourMetrics(WindowsAzureData):
+
+    ''' HourMetrics class in service properties. '''
+
+    def __init__(self):
+        self.version = u'1.0'
+        self.enabled = False
+        self.include_apis = None
+        self.retention_policy = RetentionPolicy()
+        
+
+class MinuteMetrics(WindowsAzureData):
+
+    ''' MinuteMetrics class in service properties. '''
+
+    def __init__(self):
+        self.version = u'1.0'
+        self.enabled = False
+        self.include_apis = None
+        self.retention_policy = RetentionPolicy()
+        
+class CorsRule(WindowsAzureData):
+
+    ''' CorsRule class in CORS (Cross-Origin Resource Sharing) '''
+
+    def __init__(self, allowed_origins = None, allowed_methods = None, \
+                max_age_in_seconds = None, exposed_headers = None,  \
+                allowed_headers = None):
+                
+        self.allowed_origins = allowed_origins
+        self.allowed_methods = allowed_methods
+        self.max_age_in_seconds = max_age_in_seconds
+        self.exposed_headers = exposed_headers
+        self.allowed_headers = allowed_headers
+
+
+
 class StorageServiceProperties(WindowsAzureData):
 
     ''' Storage Service Propeties class. '''
 
     def __init__(self):
         self.logging = Logging()
-        self.metrics = Metrics()
+        self.hour_metrics = HourMetrics()
+        self.minute_metrics = MinuteMetrics()
+        self.cors = _list_of(CorsRule)
 
+
+class StorageServiceStats(WindowsAzureData):
+
+    ''' Storage Service Stats class. '''
+    
+    def __init__(self):
+        self.geo_replication = GeoReplication()
+        
+class GeoReplication(WindowsAzureData):
+    
+    ''' Geo Replication class. '''
+    
+    def __init__(self, status = u'', last_sync_time=u''):
+        self.status = status
+        self.last_sync_time = last_sync_time    
 
 class AccessPolicy(WindowsAzureData):
 
@@ -438,7 +492,6 @@ def _update_storage_blob_header(request, account_name, account_key):
                             _sign_storage_blob_request(request,
                                                        account_name,
                                                        account_key)))
-
     return request.headers
 
 

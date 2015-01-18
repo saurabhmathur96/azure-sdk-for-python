@@ -226,14 +226,14 @@ class _HTTPClient(object):
                 respbody = resp.read()
             elif resp.length > 0:
                 respbody = resp.read(resp.length)
-
+                
             if DEBUG_RESPONSES and respbody:
                 print('response:')
                 try:
                     print(respbody)
                 except:
                     pass
-
+            
             response = HTTPResponse(
                 int(resp.status), resp.reason, headers, respbody)
             if self.status == 307:
