@@ -1161,7 +1161,7 @@ class BlobServiceTest(AzureTestCase):
         resp = self.bs.set_blob_service_properties(props)
 
         # Assert
-        #self.assertIsNone(resp)
+        self.assertIsNone(resp)
         received_props = self.bs.get_blob_service_properties()
         self.assertFalse(received_props.hour_metrics.enabled)
 
@@ -1174,7 +1174,7 @@ class BlobServiceTest(AzureTestCase):
         resp = self.bs.set_blob_service_properties(props, 5)
 
         # Assert
-        #self.assertIsNone(resp)
+        self.assertIsNone(resp)
         received_props = self.bs.get_blob_service_properties()
         self.assertTrue(received_props.logging.write)
 
@@ -2025,7 +2025,7 @@ class BlobServiceTest(AzureTestCase):
         # Act
         target_blob_name = 'targetblob'
         self.bs.copy_blob(
-            self.container_name, target_blob_name+'1', source_blob_url)
+            self.container_name, target_blob_name, source_blob_url)
         copy_resp = self.bs.copy_blob(
             self.container_name, target_blob_name, source_blob_url)
         self.assertEqual(copy_resp['x-ms-copy-status'], 'pending')

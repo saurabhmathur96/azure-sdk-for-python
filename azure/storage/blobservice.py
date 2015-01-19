@@ -513,7 +513,7 @@ class BlobService(_StorageClient):
             request, self.use_local_storage)
         request.headers = _update_storage_blob_header(
             request, self.account_name, self.account_key)
-        return self._perform_request(request)
+        self._perform_request(request)
         
 
     def get_blob_service_properties(self, timeout=None):
